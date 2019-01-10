@@ -131,7 +131,16 @@ class AwsClient
             $msg = "Please add key/secret or a profile name into config.json or set up an IAM profile for your EC2 instance.";
             throw new TransportException($msg, 403, $e);
         } catch(S3Exception $e) {
-            throw new TransportException("Connection to Amazon S3 failed.", null, $e);
+            $msg = $e->getAwsErrorMessage();
+
+            throw new TransportException(
+                sprintf(
+                    "Connection to Amazon S3 failed: %s",
+                    isset($msg) ? $msg : $e->getMessage()
+                ),
+                $e->getStatusCode(),
+                $e
+            );
         } catch (TransportException $e) {
             throw $e; // just re-throw
         } catch (\Exception $e) {
