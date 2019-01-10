@@ -38,57 +38,6 @@ class AwsClientTest extends \PHPUnit_Framework_TestCase
         $this->io = $this->getMockBuilder('Composer\IO\IOInterface')->getMock();
     }
     
-    public function testS3FactoryUseUSStandardRegionIfNotProvided()
-    {
-        $client = new AwsClient($this->io, $this->config);
-        
-        $s3Client = $client->s3factory($this->config);
-        
-        $this->assertEquals('us-east-1', $s3Client->getRegion());
-    }
-    
-    public function testS3FactoryUseRegionFromProfileConfigFile()
-    {
-        $this->config->merge([
-            'config' => [
-                'amazon-aws' => [
-                    'profile' => 'my-profile'
-                ]
-            ]
-        ]);
-        $client = new AwsClient($this->io, $this->config);
-        $client->setAwsConfig([
-            'profile my-profile' => [
-                'region' => 'us-west-1'
-            ]
-        ]);
-        
-        $s3Client = $client->s3factory($this->config);
-        
-        $this->assertEquals('us-west-1', $s3Client->getRegion());
-    }
-    
-    public function testS3FactoryUseRegionFromProfileConfigFileWithObsoleteNamingConvention()
-    {
-        $this->config->merge([
-            'config' => [
-                'amazon-aws' => [
-                    'profile' => 'my-profile'
-                ]
-            ]
-        ]);
-        $client = new AwsClient($this->io, $this->config);
-        $client->setAwsConfig([
-            'my-profile' => [
-                'region' => 'us-west-1'
-            ]
-        ]);
-        
-        $s3Client = $client->s3factory($this->config);
-        
-        $this->assertEquals('us-west-1', $s3Client->getRegion());
-    }
-    
     public function getS3Urls()
     {
         return [

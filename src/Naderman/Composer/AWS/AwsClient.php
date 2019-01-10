@@ -37,14 +37,9 @@ class AwsClient
     protected $io;
 
     /**
-     * @var S3Client
+     * @var S3Client[]
      */
-    protected $client;
-
-    /**
-     * @var array
-     */
-    protected $awsConfig;
+    protected $clients = array();
 
     /**
      * @param \Composer\IO\IOInterface $io
@@ -54,32 +49,6 @@ class AwsClient
     {
         $this->io       = $io;
         $this->config   = $config;
-    }
-
-    /**
-     * @return array
-     */
-    public function getAwsConfig()
-    {
-        if (is_null($this->awsConfig)) {
-            if (isset($_SERVER['HOME']) && file_exists($_SERVER['HOME'] . '/.aws/config')) {
-                $this->awsConfig = parse_ini_file($_SERVER['HOME'] . '/.aws/config', true);
-            } else {
-                $this->awsConfig = [];
-            }
-        }
-        
-        return $this->awsConfig;
-    }
-
-    /**
-     * @param array $config
-     * @return AwsClient
-     */
-    public function setAwsConfig($config)
-    {
-        $this->awsConfig = $config;
-        return $this;
     }
 
     /**
@@ -107,8 +76,8 @@ class AwsClient
             if ($to) {
                 $params['SaveAs'] = $to;
             }
-    
-            $s3     = $this->s3factory($this->config);
+
+            $s3     = $this->s3factory($this->config, $bucket);
             $result = $s3->getObject($params);
 
             if ($progress) {
@@ -187,16 +156,18 @@ class AwsClient
      * 3) read region from profile config file
      * 
      * @param \Composer\Config $config
+     * @param string $bucket
      *
      * @return \Aws\S3\S3Client
      */
-    public function s3factory(Config $config)
+    public function s3factory(Config $config, $bucket)
     {
-        if (is_null($this->client)) {
+        if (!isset($this->clients[$bucket])) {
+
             $s3config = array(
                 'version' => 'latest'
             );
-    
+
             /**
              * If these are not set and we happen to have an IAM profile, it will still work.
              */
@@ -209,7 +180,7 @@ class AwsClient
                     );
                 }
             }
-            
+
             if (!isset($s3config['profile']) && getenv('AWS_DEFAULT_PROFILE')) {
                 $s3config['profile'] = getenv('AWS_DEFAULT_PROFILE');
             }
@@ -224,48 +195,27 @@ class AwsClient
             } else if (!function_exists('AWS\manifest')) {
                 require_once __DIR__ . '/../../../../../../aws/aws-sdk-php/src/functions.php';
             }
-            
+
             if (!function_exists('GuzzleHttp\Psr7\uri_for')) {
                 require_once __DIR__ . '/../../../../../../guzzlehttp/psr7/src/functions_include.php';
             }
-            
+
             if (!function_exists('GuzzleHttp\choose_handler')) {
                 require_once __DIR__ . '/../../../../../../guzzlehttp/guzzle/src/functions_include.php';
             }
-            
+
             if (!function_exists('GuzzleHttp\Promise\queue')) {
                 require_once __DIR__ . '/../../../../../../guzzlehttp/promises/src/functions_include.php';
             }
 
             if (!isset($s3config['region'])) {
-                $this->detectRegion($s3config);
+                $s3config['region'] = (new S3MultiRegionClient($s3config))->determineBucketRegion($bucket);
             }
 
-            if (isset($s3config['region'])) {
-                $this->client = new S3Client($s3config);
-            } else {
-                $this->io->write("WARN: composer-aws couldn't find a configured region for S3. It'll take a couple extra HTTP round-trips to determine the region(s).");
-                $this->client = new S3MultiRegionClient($s3config);
-            }
+            $this->clients[$bucket] = new S3Client($s3config);
+
         }
 
-        return $this->client;
-    }
-    
-    public function detectRegion(array &$config)
-    {
-        if (getenv('AWS_DEFAULT_REGION')) {
-            $config['region'] = getenv('AWS_DEFAULT_REGION');
-        } elseif (isset($config['profile'])) {
-            $awsConfig = $this->getAwsConfig();
-            if (isset($awsConfig['profile ' . $config['profile']]) &&
-                isset($awsConfig['profile ' . $config['profile']]['region'])) {
-                $config['region'] = $awsConfig['profile ' . $config['profile']]['region'];
-            // support aws CLI <1.1.0 config file format
-            } elseif (isset($awsConfig[$config['profile']]) &&
-                isset($awsConfig[$config['profile']]['region'])) {
-                $config['region'] = $awsConfig[$config['profile']]['region'];
-            }
-        }
+        return $this->clients[$bucket];
     }
 }
