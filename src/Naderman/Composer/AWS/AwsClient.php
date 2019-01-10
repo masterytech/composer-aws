@@ -19,6 +19,7 @@ use Composer\Downloader\TransportException;
 
 use Aws\S3\S3Client;
 use Aws\S3\S3MultiRegionClient;
+use Aws\Credentials\CredentialProvider;
 
 /**
  * @author Till Klampaeckel <till@php.net>
@@ -168,21 +169,11 @@ class AwsClient
                 'version' => 'latest'
             );
 
-            /**
-             * If these are not set and we happen to have an IAM profile, it will still work.
-             */
-            if (($composerAws = $config->get('amazon-aws'))) {
-                $s3config = array_merge($s3config, $composerAws);
-                if (isset($composerAws['secret']) && !isset($composerAws['credentials'])) {
-                    $s3config['credentials'] = array(
-                        'key'    => $composerAws['key'],
-                        'secret' => $composerAws['secret']
-                    );
-                }
-            }
 
-            if (!isset($s3config['profile']) && getenv('AWS_DEFAULT_PROFILE')) {
-                $s3config['profile'] = getenv('AWS_DEFAULT_PROFILE');
+            if (($composerAws = $config->get(ComposerCredentialProvider::CONFIG_SCOPE))) {
+                unset($composerAws[ComposerCredentialProvider::CREDENTIALS_PATH]);
+
+                $s3config = array_merge($s3config, $composerAws);
             }
 
             $static_include_path = __DIR__ . '/../../../../../../composer/autoload_static.php';
@@ -192,7 +183,7 @@ class AwsClient
                 $static_include_path = realpath($static_include_path);
                 $static_include_path = dirname($static_include_path);
                 require_once   $static_include_path . '/../aws/aws-sdk-php/src/functions.php';
-            } else if (!function_exists('AWS\manifest')) {
+            } else if (!function_exists('AWS\manifest') || !function_exists(('Aws\default_http_handler'))) {
                 require_once __DIR__ . '/../../../../../../aws/aws-sdk-php/src/functions.php';
             }
 
@@ -207,6 +198,21 @@ class AwsClient
             if (!function_exists('GuzzleHttp\Promise\queue')) {
                 require_once __DIR__ . '/../../../../../../guzzlehttp/promises/src/functions_include.php';
             }
+
+            $credentialProviders = array(
+                new ComposerCredentialProvider($config)
+            );
+
+            if (isset($s3config['profile'])) {
+                $credentialProviders[] = CredentialProvider::ini($s3config['profile']);
+            }
+
+            $credentialProviders[] = CredentialProvider::defaultProvider();
+
+            $s3config['credentials'] = call_user_func_array(
+                '\Aws\Credentials\CredentialProvider::chain',
+                $credentialProviders
+            );
 
             if (!isset($s3config['region'])) {
                 $s3config['region'] = (new S3MultiRegionClient($s3config))->determineBucketRegion($bucket);
