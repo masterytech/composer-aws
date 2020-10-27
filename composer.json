@@ -22,12 +22,13 @@
         }
     },
     "extra": {
-        "class": "Naderman\\Composer\\AWS\\AwsPlugin"
+        "class": "Naderman\\Composer\\AWS\\AwsPlugin",
+        "plugin-modifies-downloads": true
     },
     "require": {
         "php": ">=5.5",
         "aws/aws-sdk-php": "^3.0",
-        "composer-plugin-api": "^1.0"
+        "composer-plugin-api": "^1.0 || ^2.0"
     },
     "require-dev": {
         "composer/composer": "^1.0",

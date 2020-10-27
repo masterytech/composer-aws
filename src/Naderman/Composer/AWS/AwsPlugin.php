@@ -55,6 +55,16 @@ class AwsPlugin implements PluginInterface, EventSubscriberInterface
     }
 
     /**
+     * @inheritDoc
+     */
+    public function deactivate(Composer $composer, IOInterface $io) {}
+
+    /**
+     * @inheritDoc
+     */
+    public function uninstall(Composer $composer, IOInterface $io) {}
+
+    /**
      * Returns an array of event names this subscriber wants to listen to.
      *
      * The array keys are event names and the value can be:
@@ -110,7 +120,12 @@ class AwsPlugin implements PluginInterface, EventSubscriberInterface
     {
         $protocol = parse_url($event->getProcessedUrl(), PHP_URL_SCHEME);
 
-        if ($protocol === 's3') {
+        if ($protocol !== 's3') return;
+
+        if (
+            version_compare(PluginInterface::PLUGIN_API_VERSION, '1.0.0', 'ge')
+            && version_compare(PluginInterface::PLUGIN_API_VERSION, '2.0.0', 'lt')
+        ) {
             $s3RemoteFilesystem = new S3RemoteFilesystem(
                 $this->io,
                 $this->composer->getConfig(),
@@ -118,6 +133,9 @@ class AwsPlugin implements PluginInterface, EventSubscriberInterface
                 $this->getClient()
             );
             $event->setRemoteFilesystem($s3RemoteFilesystem);
+        } else {
+            $http_url = $this->getClient()->getDownloadUrl($event->getProcessedUrl());
+            $event->setProcessedUrl($http_url);
         }
     }
 }

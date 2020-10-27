@@ -224,4 +224,25 @@ class AwsClient
 
         return $this->clients[$bucket];
     }
+
+    /**
+     * @param string $url
+     *
+     * @return string Download url
+     */
+    public function getDownloadUrl($url)
+    {
+        list($bucket, $key) = $this->determineBucketAndKey($url);
+
+        $s3_client = $this->s3factory($this->config, $bucket);
+
+        $command = $s3_client->getCommand('GetObject', array(
+            'Bucket' => $bucket,
+            'Key' => $key
+        ));
+
+        $request = $s3_client->createPresignedRequest($command, '+2 minutes');
+
+        return (string) $request->getUri();
+    }
 }
