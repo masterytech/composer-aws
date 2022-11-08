@@ -1,0 +1,34 @@
+{
+  "name": "PHP",
+  "build": {
+    "dockerfile": "../Dockerfile"
+  },
+
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "php.validate.executablePath": "/usr/local/bin/php"
+      },
+      "extensions": [
+        "ms-azuretools.vscode-docker",
+        "bmewburn.vscode-intelephense-client",
+        "xdebug.php-debug"
+      ]
+    }
+  },
+
+  "mounts": [
+    {
+      "source": "/var/run/docker.sock",
+      "target": "/var/run/docker.sock",
+      "type": "bind"
+    },
+    {
+      "source": "${localEnv:HOME}${localEnv:USERPROFILE}/.aws",
+      "target": "/root/.aws",
+      "type": "bind"
+    }
+  ],
+
+  "forwardPorts": [9003]
+}
