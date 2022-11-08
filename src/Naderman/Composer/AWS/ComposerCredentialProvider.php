@@ -54,7 +54,7 @@ class ComposerCredentialProvider
             return new Promise\RejectedPromise(new CredentialsException(self::NO_CONFIG_ERROR_MESSAGE));
         }
 
-        return Promise\promise_for(
+        return  Promise\Create::promiseFor(
             new Credentials(
                 $credentials[self::CREDENTIALS_PATH_KEY],
                 $credentials[self::CREDENTIALS_PATH_SECRET]

@@ -17,8 +17,6 @@ use Composer\IO\IOInterface;
 use Composer\Plugin\PluginInterface;
 use Composer\Plugin\PluginEvents;
 use Composer\Plugin\PreFileDownloadEvent;
-use Composer\Util\Filesystem;
-use Composer\Util\RemoteFilesystem;
 
 /**
  * Composer Plugin for AWS functionality
@@ -41,7 +39,7 @@ class AwsPlugin implements PluginInterface, EventSubscriberInterface
      * @var AwsClient
      */
     protected $client;
-    
+
     /**
      * Apply plugin modifications to Composer
      *
@@ -99,7 +97,7 @@ class AwsPlugin implements PluginInterface, EventSubscriberInterface
         if (is_null($this->client)) {
             $this->setClient(new AwsClient($this->io, $this->composer->getConfig()));
         }
-        
+
         return $this->client;
     }
 
@@ -113,12 +111,13 @@ class AwsPlugin implements PluginInterface, EventSubscriberInterface
 
     /**
      * Replace remote file system on S3 protocol download
-     * 
+     *
      * @param PreFileDownloadEvent $event
      */
     public function onPreFileDownload(PreFileDownloadEvent $event)
     {
-        $protocol = parse_url($event->getProcessedUrl(), PHP_URL_SCHEME);
+        $url = $event->getProcessedUrl();
+        $protocol = parse_url($url, PHP_URL_SCHEME);
 
         if ($protocol !== 's3') return;
 
@@ -134,7 +133,7 @@ class AwsPlugin implements PluginInterface, EventSubscriberInterface
             );
             $event->setRemoteFilesystem($s3RemoteFilesystem);
         } else {
-            $http_url = $this->getClient()->getDownloadUrl($event->getProcessedUrl());
+            $http_url = $this->getClient()->getDownloadUrl($url);
             $event->setProcessedUrl($http_url);
         }
     }

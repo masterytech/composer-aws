@@ -114,7 +114,7 @@ class AwsClient
         } catch (TransportException $e) {
             throw $e; // just re-throw
         } catch (\Exception $e) {
-            throw new TransportException("Problem?", null, $e);
+            throw new TransportException("Problem?", 0, $e);
         }
 
         return $this;
@@ -128,7 +128,7 @@ class AwsClient
     public function determineBucketAndKey($url)
     {
         $hostName = parse_url($url, PHP_URL_HOST);
-        $path     = substr(parse_url($url, PHP_URL_PATH), 1);
+        $path     = substr(parse_url($url, PHP_URL_PATH) ?? "", 1);
 
         $parts = array();
         if (!empty($path)) {
@@ -155,7 +155,7 @@ class AwsClient
      * 1) read region from config parameter
      * 2) read region from environment variables
      * 3) read region from profile config file
-     * 
+     *
      * @param \Composer\Config $config
      * @param string $bucket
      *
@@ -169,13 +169,17 @@ class AwsClient
                 'version' => 'latest'
             );
 
-
             if (($composerAws = $config->get(ComposerCredentialProvider::CONFIG_SCOPE))) {
                 unset($composerAws[ComposerCredentialProvider::CREDENTIALS_PATH]);
 
                 $s3config = array_merge($s3config, $composerAws);
             }
 
+            /**
+             * @todo Is this really necessary? Shouldn't all this stuff be handled
+             *       via composer dependencies and autoload?
+             */
+            /*
             $static_include_path = __DIR__ . '/../../../../../../composer/autoload_static.php';
             if ( file_exists( $static_include_path)){
                 // This file has to be loaded with the exact same name as in the composer static autoloader to avoid
@@ -187,7 +191,7 @@ class AwsClient
                 require_once __DIR__ . '/../../../../../../aws/aws-sdk-php/src/functions.php';
             }
 
-            if (!function_exists('GuzzleHttp\Psr7\uri_for')) {
+            if (!function_exists('GuzzleHttp\Psr7\Utils::uriFor')) {
                 require_once __DIR__ . '/../../../../../../guzzlehttp/psr7/src/functions_include.php';
             }
 
@@ -198,6 +202,7 @@ class AwsClient
             if (!function_exists('GuzzleHttp\Promise\queue')) {
                 require_once __DIR__ . '/../../../../../../guzzlehttp/promises/src/functions_include.php';
             }
+            */
 
             $credentialProviders = array(
                 new ComposerCredentialProvider($config)

@@ -15,26 +15,29 @@ use Composer\Composer;
 use Composer\Config;
 use Composer\IO\IOInterface;
 use Composer\Plugin\PreFileDownloadEvent;
+use Composer\Plugin\PluginInterface;
 use Composer\Util\RemoteFilesystem;
+use Naderman\Composer\AWS\AwsClient;
 use Naderman\Composer\AWS\AwsPlugin;
 use Naderman\Composer\AWS\S3RemoteFilesystem;
-
+use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\TestCase;
 /**
  * Composer Plugin tests for AWS functionality
  */
-class AwsPluginTest extends \PHPUnit_Framework_TestCase
+class AwsPluginTest extends TestCase
 {
     /**
      * @var Composer
      */
     protected $composer;
-    
+
     /**
-     * @var IOInterface|\PHPUnit_Framework_MockObject_MockObject
+     * @var IOInterface|MockObject
      */
     protected $io;
-    
-    public function setUp()
+
+    protected function setUp(): void
     {
         $this->composer = new Composer();
         $this->composer->setConfig(new Config());
@@ -44,7 +47,7 @@ class AwsPluginTest extends \PHPUnit_Framework_TestCase
 
     /**
      * Non-S3 addresses data provider
-     * 
+     *
      * @return array
      */
     public function getNonS3Addresses()
@@ -59,7 +62,7 @@ class AwsPluginTest extends \PHPUnit_Framework_TestCase
 
     /**
      * S3 addresses data provider
-     * 
+     *
      * @return array
      */
     public function getS3Addresses()
@@ -71,7 +74,7 @@ class AwsPluginTest extends \PHPUnit_Framework_TestCase
             ['s3://example/packages.json']
         ];
     }
-    
+
     /**
      * @dataProvider getNonS3Addresses
      * @param $address
@@ -80,17 +83,26 @@ class AwsPluginTest extends \PHPUnit_Framework_TestCase
     {
         $plugin = new AwsPlugin();
         $plugin->activate($this->composer, $this->io);
+        /** @var PreFileDownloadEvent&MockObject $event */
         $event = $this->getMockBuilder(PreFileDownloadEvent::class)
             ->disableOriginalConstructor()
             ->getMock();
-        
+
         $event->expects($this->once())
             ->method('getProcessedUrl')
             ->willReturn($address);
-        
-        $event->expects($this->never())
-            ->method('setRemoteFilesystem');
-        
+
+        if (
+            version_compare(PluginInterface::PLUGIN_API_VERSION, '1.0.0', 'ge')
+            && version_compare(PluginInterface::PLUGIN_API_VERSION, '2.0.0', 'lt')
+        ) {
+            $event->expects($this->never())
+                ->method('setRemoteFilesystem');
+        } else {
+            $event->expects($this->never())
+                ->method('setProcessedUrl');
+        }
+
         $plugin->onPreFileDownload($event);
     }
 
@@ -98,10 +110,11 @@ class AwsPluginTest extends \PHPUnit_Framework_TestCase
      * @dataProvider getS3Addresses
      * @param $address
      */
-    public function testPluginReplaceRemoteSystemForS3Protocols($address)
+    public function testPluginProcessS3Protocols($address)
     {
         $plugin = new AwsPlugin();
         $plugin->activate($this->composer, $this->io);
+        /** @var PreFileDownloadEvent&MockObject $event */
         $event = $this->getMockBuilder(PreFileDownloadEvent::class)
             ->disableOriginalConstructor()
             ->getMock();
@@ -109,21 +122,29 @@ class AwsPluginTest extends \PHPUnit_Framework_TestCase
         $event->expects($this->once())
             ->method('getProcessedUrl')
             ->willReturn($address);
-        
-        $remoteFileSystem = $this->getMockBuilder(RemoteFilesystem::class)
-            ->disableOriginalConstructor()
-            ->getMock();
-        $event->expects($this->once())
-            ->method('getRemoteFileSystem')
-            ->willReturn($remoteFileSystem);
-        
-        $remoteFileSystem->expects($this->once())
-            ->method('getOptions')
-            ->willReturn([]);
 
-        $event->expects($this->once())
-            ->method('setRemoteFilesystem')
-            ->with($this->isInstanceOf(S3RemoteFilesystem::class));
+        if (
+            version_compare(PluginInterface::PLUGIN_API_VERSION, '1.0.0', 'ge')
+            && version_compare(PluginInterface::PLUGIN_API_VERSION, '2.0.0', 'lt')
+        ) {
+            $remoteFileSystem = $this->getMockBuilder(RemoteFilesystem::class)
+                ->disableOriginalConstructor()
+                ->getMock();
+            $event->expects($this->once())
+                ->method('getRemoteFileSystem')
+                ->willReturn($remoteFileSystem);
+
+            $remoteFileSystem->expects($this->once())
+                ->method('getOptions')
+                ->willReturn([]);
+
+            $event->expects($this->once())
+                ->method('setRemoteFilesystem')
+                ->with($this->isInstanceOf(S3RemoteFilesystem::class));
+        } else {
+            $event->expects($this->once())
+                ->method('setProcessedUrl');
+        }
 
         $plugin->onPreFileDownload($event);
     }

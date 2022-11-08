@@ -19,8 +19,9 @@ use Composer\Util\RemoteFilesystem;
 use Naderman\Composer\AWS\AwsClient;
 use Naderman\Composer\AWS\AwsPlugin;
 use Naderman\Composer\AWS\S3RemoteFilesystem;
+use PHPUnit\Framework\TestCase;
 
-class AwsClientTest extends \PHPUnit_Framework_TestCase
+class AwsClientTest extends TestCase
 {
     /**
      * @var Config
@@ -32,12 +33,12 @@ class AwsClientTest extends \PHPUnit_Framework_TestCase
      */
     protected $io;
 
-    public function setUp()
+    protected function setUp(): void
     {
         $this->config = new Config();
         $this->io = $this->getMockBuilder('Composer\IO\IOInterface')->getMock();
     }
-    
+
     public function getS3Urls()
     {
         return [
@@ -54,7 +55,7 @@ class AwsClientTest extends \PHPUnit_Framework_TestCase
     public function testBucketAndKeyExtraction($url, $bucket, $key)
     {
         $client = new AwsClient($this->io, $this->config);
-        
+
         $this->assertSame([$bucket, $key], $client->determineBucketAndKey($url));
     }
 }
