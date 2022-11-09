@@ -1,6 +1,12 @@
 ARG VARIANT="8-cli"
 FROM php:${VARIANT}
 
+# Enable bash aliases
+
+RUN sed -ri 's/#( alias.+)/\1/' ~/.bashrc
+
+# Install xdebug
+
 RUN curl -sSLf -o /usr/local/bin/install-php-extensions \
       https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions \
 && chmod +x /usr/local/bin/install-php-extensions \
@@ -9,15 +15,26 @@ RUN curl -sSLf -o /usr/local/bin/install-php-extensions \
 
 RUN echo "xdebug.mode = debug" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini
 
-RUN sed -ri 's/#( alias.+)/\1/' ~/.bashrc
+# Install docker tools
 
 RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
  && apt-get -y install --no-install-recommends docker.io git less vim unzip zip
 
+# Install AWSCLI
+
 RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" \
  && unzip awscliv2.zip \
- && ./aws/install --bin-dir /usr/bin \
+ && ./aws/install \
  && rm -rf awscliv2.zip aws
+
+# Install AWSCLI deps (groff for 'help' command, pip + git-remote-codecommit)
+
+RUN apt-get update \
+ && apt-get install -y groff python3-pip \
+ && apt-get autoremove -y && rm -rf /var/lib/apt/lists/* \
+ && pip install git-remote-codecommit
+
+# Install composer
 
 RUN curl -sS -o /tmp/composer-setup.php https://getcomposer.org/installer \
  && curl -sS -o /tmp/composer-setup.sig https://composer.github.io/installer.sig \
