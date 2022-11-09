@@ -15,10 +15,10 @@ RUN curl -sSLf -o /usr/local/bin/install-php-extensions \
 
 RUN echo "xdebug.mode = debug" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini
 
-# Install docker tools
+# Install tools
 
 RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
- && apt-get -y install --no-install-recommends docker.io git less vim unzip zip
+ && apt-get -y install --no-install-recommends git less unzip zip
 
 # Install AWSCLI
 
@@ -42,4 +42,5 @@ RUN curl -sS -o /tmp/composer-setup.php https://getcomposer.org/installer \
  && php /tmp/composer-setup.php --no-ansi --install-dir=/usr/local/bin --filename=composer \
  && rm -rf /tmp/composer-setup.*
 
+ENV COMPOSER_DISABLE_XDEBUG_WARN=1
 ENV PATH="${PATH}:./vendor/bin"
