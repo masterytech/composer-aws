@@ -1,34 +1,42 @@
 {
-  "name": "PHP",
-  "build": {
-    "dockerfile": "Dockerfile",
-    "context": ".."
-  },
-
-  "customizations": {
-    "vscode": {
-      "settings": {
-        "php.validate.executablePath": "/usr/local/bin/php"
-      },
-      "extensions": [
-        "bmewburn.vscode-intelephense-client",
-        "xdebug.php-debug"
-      ]
-    }
-  },
-
-  "mounts": [
-    {
-      "source": "${localEnv:HOME}${localEnv:USERPROFILE}/.aws",
-      "target": "/root/.aws",
-      "type": "bind"
+    "name": "PHP",
+    "build": {
+      "dockerfile": "Dockerfile",
+      "context": "..",
+      "args": {
+          "USERNAME": "${localEnv:USER}"
+      }
     },
-    {
-      "source": "${localEnv:HOME}${localEnv:USERPROFILE}/.composer",
-      "target": "/root/.composer",
-      "type": "bind"
-    }
-  ],
 
-  "forwardPorts": [9003]
-}
+    "customizations": {
+      "vscode": {
+        "settings": {
+          "php.validate.executablePath": "/usr/local/bin/php"
+        },
+        "extensions": [
+          "bmewburn.vscode-intelephense-client",
+          "ms-azuretools.vscode-docker",
+          "swordev.phpstan",
+          "xdebug.php-debug"
+        ]
+      }
+    },
+  
+    "mounts": [
+      {
+        "source": "${localEnv:HOME}${localEnv:USERPROFILE}/.aws",
+        "target": "/root/.aws",
+        "type": "bind"
+      },
+      {
+        "source": "${localEnv:HOME}${localEnv:USERPROFILE}/.composer",
+        "target": "/root/.composer",
+        "type": "bind"
+      }
+    ],
+  
+    "forwardPorts": [9003],
+
+    "remoteUser": "${localEnv:USER}"
+  }
+  

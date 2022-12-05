@@ -1,9 +1,35 @@
 ARG VARIANT="8-cli"
+
 FROM php:${VARIANT}
+
+ARG USERNAME=${USERNAME}
+ARG USER_UID=1000
+ARG USER_GID=1000
+
+# Install tools
+
+RUN apt-get update && apt-get -y install \
+     git \
+     less \
+     sudo \
+     unzip \
+     vim \
+     zip \
+ && apt-get autoremove -y && rm -rf /var/lib/apt/lists/*
+
+# Create build user
+
+RUN groupadd --gid ${USER_GID} ${USERNAME} \
+ && useradd --uid ${USER_UID} --gid ${USER_GID} -m ${USERNAME} -s /bin/bash
+
+# Make dev user superuser
+
+RUN echo "${USERNAME} ALL=(root) NOPASSWD:ALL" > /etc/sudoers.d/dev-user \
+ && chmod 0400 /etc/sudoers.d/dev-user
 
 # Enable bash aliases
 
-RUN sed -ri 's/#( alias.+)/\1/' ~/.bashrc
+RUN sed -ri 's/#( *alias l.+)/\1/' /home/${USERNAME}/.bashrc
 
 # Install xdebug
 
@@ -14,11 +40,6 @@ RUN curl -sSLf -o /usr/local/bin/install-php-extensions \
      xdebug-stable
 
 RUN echo "xdebug.mode = debug" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini
-
-# Install tools
-
-RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
- && apt-get -y install --no-install-recommends git less unzip zip
 
 # Install AWSCLI
 
@@ -44,3 +65,9 @@ RUN curl -sS -o /tmp/composer-setup.php https://getcomposer.org/installer \
 
 ENV COMPOSER_DISABLE_XDEBUG_WARN=1
 ENV PATH="${PATH}:./vendor/bin"
+
+# Install phpdoc
+
+RUN curl -sSL -o /usr/local/bin/phpDocumentor.phar https://github.com/phpDocumentor/phpDocumentor/releases/download/v3.3.1/phpDocumentor.phar \
+ && printf '#!/bin/sh\nphp -d "error_reporting=E_ALL\&~E_DEPRECATED" /usr/local/bin/phpDocumentor.phar "$@"\n' > /usr/local/bin/phpdoc \
+ && chmod 755 /usr/local/bin/phpDocumentor.phar /usr/local/bin/phpdoc
