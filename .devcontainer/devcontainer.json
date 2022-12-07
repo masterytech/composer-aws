@@ -23,15 +23,17 @@
     },
   
     "mounts": [
-      {
-        "source": "${localEnv:HOME}${localEnv:USERPROFILE}/.aws",
-        "target": "/root/.aws",
-        "type": "bind"
+        // Bind mount aws-cli config and cache
+        {
+          "source": "${localEnv:HOME}${localEnv:USERPROFILE}/.aws",
+          "target": "/home/${localEnv:USER}/.aws",
+          "type": "bind"
       },
+      // Bind mount .composer config & cache
       {
-        "source": "${localEnv:HOME}${localEnv:USERPROFILE}/.composer",
-        "target": "/root/.composer",
-        "type": "bind"
+          "source": "${localEnv:HOME}${localEnv:USERPROFILE}/.composer",
+          "target": "/home/${localEnv:USER}/.composer",
+          "type": "bind"
       }
     ],
   
