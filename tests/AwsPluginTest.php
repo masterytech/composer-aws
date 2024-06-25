@@ -37,7 +37,7 @@ class AwsPluginTest extends TestCase
      */
     protected $io;
 
-    protected function setUp(): void
+    protected function setUp()
     {
         $this->composer = new Composer();
         $this->composer->setConfig(new Config());

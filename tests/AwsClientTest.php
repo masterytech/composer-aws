@@ -33,7 +33,7 @@ class AwsClientTest extends TestCase
      */
     protected $io;
 
-    protected function setUp(): void
+    protected function setUp()
     {
         $this->config = new Config();
         $this->io = $this->getMockBuilder('Composer\IO\IOInterface')->getMock();
