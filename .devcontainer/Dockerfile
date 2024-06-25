@@ -81,5 +81,3 @@ ENV PATH="${PATH}:./vendor/bin"
 RUN curl -sSL -o /usr/local/bin/phpDocumentor.phar https://github.com/phpDocumentor/phpDocumentor/releases/download/v3.3.1/phpDocumentor.phar \
  && printf '#!/bin/sh\nphp -d "error_reporting=E_ALL\&~E_DEPRECATED" /usr/local/bin/phpDocumentor.phar "$@"\n' > /usr/local/bin/phpdoc \
  && chmod 755 /usr/local/bin/phpDocumentor.phar /usr/local/bin/phpdoc
-
-USER "${USERNAME}"

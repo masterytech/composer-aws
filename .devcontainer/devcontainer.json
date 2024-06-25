@@ -37,5 +37,7 @@
       }
     ],
 
-    "forwardPorts": [9003]
+    "forwardPorts": [9003],
+
+    "remoteUser": "${localEnv:USER}"
   }
