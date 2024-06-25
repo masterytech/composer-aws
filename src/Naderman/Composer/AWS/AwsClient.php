@@ -128,7 +128,8 @@ class AwsClient
     public function determineBucketAndKey($url)
     {
         $hostName = parse_url($url, PHP_URL_HOST);
-        $path     = substr(parse_url($url, PHP_URL_PATH) ?? "", 1);
+        $urlPath  = parse_url($url, PHP_URL_PATH);
+        $path     = substr($urlPath ? $urlPath : "", 1);
 
         $parts = array();
         if (!empty($path)) {
