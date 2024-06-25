@@ -21,7 +21,7 @@
         ]
       }
     },
-  
+
     "mounts": [
         // Bind mount aws-cli config and cache
         {
@@ -36,9 +36,6 @@
           "type": "bind"
       }
     ],
-  
-    "forwardPorts": [9003],
 
-    "remoteUser": "${localEnv:USER}"
+    "forwardPorts": [9003]
   }
-  

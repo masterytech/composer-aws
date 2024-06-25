@@ -27,11 +27,11 @@
     },
     "require": {
         "php": ">=5.5",
-        "aws/aws-sdk-php": "^3.0",
+        "aws/aws-sdk-php": "^3.278",
         "composer-plugin-api": "^1.0 || ^2.0"
     },
     "require-dev": {
-        "composer/composer": "^2.0",
-        "phpunit/phpunit": "~9.0"
+        "composer/composer": "^1.0 || ^2.0",
+        "phpunit/phpunit": "^5.7"
     }
 }
