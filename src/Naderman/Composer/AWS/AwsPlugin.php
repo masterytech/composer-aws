@@ -41,6 +41,16 @@ class AwsPlugin implements PluginInterface, EventSubscriberInterface
     protected $client;
 
     /**
+     * Test if this plugin runs within Composer 2
+     *
+     * @return bool
+     */
+    protected static function isComposer1()
+    {
+        return version_compare(PluginInterface::PLUGIN_API_VERSION, '2.0', '<');
+    }
+
+    /**
      * Apply plugin modifications to Composer
      *
      * @param Composer    $composer
@@ -82,11 +92,9 @@ class AwsPlugin implements PluginInterface, EventSubscriberInterface
      */
     public static function getSubscribedEvents()
     {
-        return array(
-            PluginEvents::PRE_FILE_DOWNLOAD => array(
-                array('onPreFileDownload', 0)
-            ),
-        );
+        return [
+            PluginEvents::PRE_FILE_DOWNLOAD => [ 'onPreFileDownload', -1 ],
+        ];
     }
 
     /**
@@ -121,10 +129,7 @@ class AwsPlugin implements PluginInterface, EventSubscriberInterface
 
         if ($protocol !== 's3') return;
 
-        if (
-            version_compare(PluginInterface::PLUGIN_API_VERSION, '1.0.0', 'ge')
-            && version_compare(PluginInterface::PLUGIN_API_VERSION, '2.0.0', 'lt')
-        ) {
+        if (self::isComposer1()) {
             $s3RemoteFilesystem = new S3RemoteFilesystem(
                 $this->io,
                 $this->composer->getConfig(),
